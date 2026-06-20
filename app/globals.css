@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ألوان Expo Match الأساسية (الوضع المظلم هو الافتراضي) */
+  --background: #080c16; /* لون الخلفية الكحلي الغامق جداً */
+  --foreground: #f8fafc; /* لون النص الأبيض المائل للرمادي الفاتح */
+  
+  /* ألوان الهوية البصرية */
+  --brand-cyan: #06b6d4;
+  --brand-cyan-glow: rgba(6, 182, 212, 0.15);
 }
 
 @theme inline {
@@ -12,15 +17,38 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* التمرير السلس: أهم كود للصفحة الواحدة (One-Pager) */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow-x: hidden; /* منع أي سكرول عرضي بالغلط يكسر التصميم */
+  -webkit-font-smoothing: antialiased; /* تنعيم الخطوط لتبدو أكثر فخامة */
+}
+
+/* 🌟 شريط تمرير (Scrollbar) احترافي مخصص لـ Expo Match */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #080c16; /* نفس لون الخلفية */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b; /* رمادي غامق */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-cyan); /* ينور لبني لما الماوس ييجي عليه */
+}
+
+/* كلاسات مساعدة للأنيميشن والـ Glow */
+.cyan-glow {
+  box-shadow: 0 0 20px var(--brand-cyan-glow);
 }
