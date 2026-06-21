@@ -40,11 +40,12 @@ function Instagram(props: any) {
 
 /* ── اللوجو المبرمج (ديناميكي) ── */
 const CustomLogo = ({ companyName }: { companyName?: string }) => {
-  const defaultName = "EXPO MATCH";
+  const defaultName = "EXPO MELD";
   const nameToUse = companyName || defaultName;
   const parts = nameToUse.split(" ");
   const firstPart = parts[0];
   const secondPart = parts.slice(1).join(" ") || "";
+  
   return (
     <div className="flex items-center gap-3">
       <div className="relative flex items-center justify-center shrink-0 w-8 h-8">
@@ -52,9 +53,9 @@ const CustomLogo = ({ companyName }: { companyName?: string }) => {
          <div className="absolute bg-cyan-400 rounded-sm transform -rotate-45 w-1.5 h-8" />
          <div className="absolute bg-cyan-200 rounded-sm transform rotate-45 z-10 w-1.5 h-4 top-1 right-1.5" />
       </div>
-      <span className="text-xl font-bold tracking-wider">
-        <span className="font-black text-white">{firstPart}</span>{" "}
-        <span className="font-light text-slate-300">{secondPart}</span>
+      <span className="text-xl font-bold tracking-wider flex gap-1.5">
+        <span className="font-black text-white">{firstPart}</span>
+        <span className="font-medium text-cyan-400">{secondPart}</span>
       </span>
     </div>
   );
@@ -380,7 +381,7 @@ export default function HomePage() {
       invalidPhone: "Please enter a valid phone number.", dateError: "End date must be after start date.",
       captchaError: "Please confirm you are not a robot.", error: "An error occurred. Please try again.",
       completedStatus: "Completed", inProgressStatus: "In Progress",
-      footerRights: `© ${new Date().getFullYear()} EXPO MATCH. All rights reserved.`
+      footerRights: `© ${new Date().getFullYear()} EXPO MELD. All rights reserved.`
     },
     AR: {
       dir: "rtl",
@@ -423,7 +424,7 @@ export default function HomePage() {
       invalidPhone: "يرجى إدخال رقم هاتف صالح.", dateError: "يجب أن يكون تاريخ النهاية بعد تاريخ البداية.",
       captchaError: "يرجى التأكيد أنك لست روبوت.", error: "حدث خطأ. يرجى المحاولة مرة أخرى.",
       completedStatus: "مكتمل", inProgressStatus: "قيد التنفيذ",
-      footerRights: `© ${new Date().getFullYear()} EXPO MATCH. جميع الحقوق محفوظة.`
+      footerRights: `© ${new Date().getFullYear()} EXPO MELD. جميع الحقوق محفوظة.`
     },
     IT: {
       dir: "ltr",
@@ -466,7 +467,7 @@ export default function HomePage() {
       invalidPhone: "Inserisci un numero di telefono valido.", dateError: "La data di fine deve essere successiva alla data di inizio.",
       captchaError: "Conferma di non essere un robot.", error: "Si è verificato un errore. Riprova.",
       completedStatus: "Completato", inProgressStatus: "In Corso",
-      footerRights: `© ${new Date().getFullYear()} EXPO MATCH. Tutti i diritti riservati.`
+      footerRights: `© ${new Date().getFullYear()} EXPO MELD. Tutti i diritti riservati.`
     },
     DE: {
       dir: "ltr",
@@ -509,7 +510,7 @@ export default function HomePage() {
       invalidPhone: "Bitte geben Sie eine gültige Telefonnummer ein.", dateError: "Das Enddatum muss nach dem Startdatum liegen.",
       captchaError: "Bitte bestätigen Sie, dass Sie kein Roboter sind.", error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
       completedStatus: "Abgeschlossen", inProgressStatus: "In Bearbeitung",
-      footerRights: `© ${new Date().getFullYear()} EXPO MATCH. Alle Rechte vorbehalten.`
+      footerRights: `© ${new Date().getFullYear()} EXPO MELD. Alle Rechte vorbehalten.`
     },
     FR: {
       dir: "ltr",
@@ -552,7 +553,7 @@ export default function HomePage() {
       invalidPhone: "Veuillez entrer un numéro de téléphone valide.", dateError: "La date de fin doit être postérieure à la date de début.",
       captchaError: "Veuillez confirmer que vous n'êtes pas un robot.", error: "Une erreur est survenue. Veuillez réessayer.",
       completedStatus: "Terminé", inProgressStatus: "En cours",
-      footerRights: `© ${new Date().getFullYear()} EXPO MATCH. Tous droits réservés.`
+      footerRights: `© ${new Date().getFullYear()} EXPO MELD. Tous droits réservés.`
     },
     ES: {
       dir: "ltr",
@@ -595,7 +596,7 @@ export default function HomePage() {
       invalidPhone: "Por favor, introduzca un número de teléfono válido.", dateError: "La fecha de fin debe ser posterior a la fecha de inicio.",
       captchaError: "Por favor, confirme que no es un robot.", error: "Ocurrió un error. Inténtalo de nuevo.",
       completedStatus: "Completado", inProgressStatus: "En Progreso",
-      footerRights: `© ${new Date().getFullYear()} EXPO MATCH. Todos los derechos reservados.`
+      footerRights: `© ${new Date().getFullYear()} EXPO MELD. Todos los derechos reservados.`
     },
     PT: {
       dir: "ltr",
@@ -638,7 +639,7 @@ export default function HomePage() {
       invalidPhone: "Por favor, insira um número de telefone válido.", dateError: "A data de fim deve ser posterior à data de início.",
       captchaError: "Por favor, confirme que não é um robô.", error: "Ocorreu um erro. Tente novamente.",
       completedStatus: "Concluído", inProgressStatus: "Em Andamento",
-      footerRights: `© ${new Date().getFullYear()} EXPO MATCH. Todos os direitos reservados.`
+      footerRights: `© ${new Date().getFullYear()} EXPO MELD. Todos os direitos reservados.`
     },
   };
 
@@ -1170,7 +1171,7 @@ export default function HomePage() {
                   value={formData.message} 
                   onChange={(e) => setFormData({...formData, message: e.target.value})} 
                   className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm resize-none" 
-                  placeholder="Descrivi il tuo progetto..." 
+                  placeholder="Descrivi il tuo projeto..." 
                 />
               </div>
 
@@ -1208,7 +1209,7 @@ export default function HomePage() {
           <CustomLogo companyName={settings?.company_name} />
           <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 text-sm text-slate-400">
             <span>{settings?.address || "Milano, Italy"}</span>
-            <a href={`mailto:${settings?.email || "email@expomatch.org"}`} className="hover:text-cyan-400 transition-colors">{settings?.email || "email@expomatch.org"}</a>
+            <a href={`mailto:${settings?.email || "email@expomeld.com"}`} className="hover:text-cyan-400 transition-colors">{settings?.email || "email@expomeld.com"}</a>
             <div className="flex items-center gap-4 border-l border-slate-800 pl-0 md:pl-8">
               {settings?.facebook_url && <a href={settings.facebook_url} target="_blank" rel="noreferrer" className="hover:text-cyan-400 transition-colors"><Facebook className="w-5 h-5" /></a>}
               {settings?.instagram_url && <a href={settings.instagram_url} target="_blank" rel="noreferrer" className="hover:text-cyan-400 transition-colors"><Instagram className="w-5 h-5" /></a>}
