@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import PhoneInput from "react-phone-number-input";
@@ -46,7 +45,6 @@ const CustomLogo = ({ companyName }: { companyName?: string }) => {
   const parts = nameToUse.split(" ");
   const firstPart = parts[0];
   const secondPart = parts.slice(1).join(" ") || "";
-
   return (
     <div className="flex items-center gap-3">
       <div className="relative flex items-center justify-center shrink-0 w-8 h-8">
@@ -98,6 +96,9 @@ export default function HomePage() {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [captchaChecked, setCaptchaChecked] = useState(false);
+  
+  // حالة جديدة لتتبع الحقول الناقصة عشان نلونها بالأحمر
+  const [fieldErrors, setFieldErrors] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     client_name: "",
@@ -153,6 +154,7 @@ export default function HomePage() {
         .single();
       if (setData) setSettings(setData);
     }
+
     fetchData();
 
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -249,31 +251,79 @@ export default function HomePage() {
   const nextServiceImage = (e: any) => { e.stopPropagation(); setCurrentServiceImageIndex(prev => (prev + 1) % serviceModalImages.length); };
   const prevServiceImage = (e: any) => { e.stopPropagation(); setCurrentServiceImageIndex(prev => (prev - 1 + serviceModalImages.length) % serviceModalImages.length); };
 
+  /* ── دالة لتحديث البيانات وإزالة الإيرور الأحمر أوتوماتيك أثناء الكتابة ── */
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (fieldErrors.includes(field)) {
+      setFieldErrors(prev => prev.filter(err => err !== field));
+    }
+  };
+
+  /* ── دالة لتغيير ألوان الحقول بناءً على الخطأ ── */
+  const getInputClass = (fieldName: string, extraClasses: string = "") => {
+    const isError = fieldErrors.includes(fieldName);
+    return `w-full bg-[#080c16] border rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none transition-colors text-sm ${extraClasses} ${
+      isError 
+        ? 'border-red-500 focus:border-red-500 bg-red-500/5' 
+        : 'border-slate-700 focus:border-cyan-500'
+    }`;
+  };
+
   /* ── التحقق من النموذج والإرسال ── */
   const validateQuoteForm = (): string | null => {
-    if (!formData.client_name.trim() || !formData.email.trim() || !formData.phone.trim() ||
-        !formData.show_name.trim() || !formData.city_country.trim() || !formData.booth_area.trim() ||
-        !formData.start_date || !formData.end_date) return t[lang].fillAll;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return t[lang].invalidEmail;
-    if (formData.phone.replace(/\D/g, "").length < 8) return t[lang].invalidPhone;
-    if (formData.start_date && formData.end_date && formData.end_date <= formData.start_date) return t[lang].dateError;
-    if (!captchaChecked) return t[lang].captchaError;
+    const errors: string[] = [];
+
+    if (!formData.client_name.trim()) errors.push("client_name");
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.push("email");
+    if (!formData.phone.trim() || formData.phone.replace(/\D/g, "").length < 8) errors.push("phone");
+    if (!formData.show_name.trim()) errors.push("show_name");
+    if (!formData.city_country.trim()) errors.push("city_country");
+    if (!formData.booth_area) errors.push("booth_area");
+    if (!formData.start_date) errors.push("start_date");
+    if (!formData.end_date) errors.push("end_date");
+    if (formData.start_date && formData.end_date && formData.end_date <= formData.start_date) errors.push("end_date");
+    if (!captchaChecked) errors.push("captcha");
+
+    setFieldErrors(errors);
+
+    if (errors.length > 0) {
+      if (errors.includes("captcha")) return t[lang].captchaError;
+      if (errors.includes("email") && formData.email.trim() !== "") return t[lang].invalidEmail;
+      if (errors.includes("phone") && formData.phone.trim() !== "") return t[lang].invalidPhone;
+      if (formData.start_date && formData.end_date && formData.end_date <= formData.start_date) return t[lang].dateError;
+      return t[lang].fillAll;
+    }
+
     return null;
   };
 
   const handleQuoteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setErrorMessage("");
+    e.preventDefault(); 
+    setErrorMessage("");
+    setFieldErrors([]);
+    
     const err = validateQuoteForm();
-    if (err) { setErrorMessage(err); setSubmitStatus("error"); setTimeout(() => setSubmitStatus("idle"), 4000); return; }
-    setIsSubmitting(true); setSubmitStatus("idle");
+    if (err) { 
+      setErrorMessage(err); 
+      setSubmitStatus("error"); 
+      setTimeout(() => setSubmitStatus("idle"), 4000); 
+      return; 
+    }
+    
+    setIsSubmitting(true); 
+    setSubmitStatus("idle");
     try {
       const { error } = await supabase.from("leads").insert([{
-        client_name: formData.client_name, email: formData.email, phone: formData.phone,
-        show_name: formData.show_name, city_country: formData.city_country,
+        client_name: formData.client_name, 
+        email: formData.email, 
+        phone: formData.phone,
+        show_name: formData.show_name, 
+        city_country: formData.city_country,
         booth_area: Number(formData.booth_area),
         start_date: formData.start_date?.toISOString().split("T")[0],
         end_date: formData.end_date?.toISOString().split("T")[0],
-        message: formData.message, status: "New"
+        message: formData.message, 
+        status: "New"
       }]);
       if (error) throw error;
       setSubmitStatus("success");
@@ -600,6 +650,10 @@ export default function HomePage() {
       <style dangerouslySetInnerHTML={{__html: `
         .PhoneInput { display: flex; align-items: center; width: 100%; background: #0b1120; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 0 1rem; transition: border-color 0.3s; }
         .PhoneInput:focus-within { border-color: #06b6d4; }
+        
+        /* ── كلاس جديد لتلوين حقل التليفون لما يكون فيه خطأ ── */
+        .phone-error .PhoneInput { border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.05) !important; }
+        
         .PhoneInputCountry { margin-right: 0.75rem; }
         .PhoneInputInput { flex: 1; background: transparent; border: none; color: white; padding: 0.875rem 0; outline: none; font-size: 0.875rem; }
         .PhoneInputCountrySelect { background: #0b1120; color: white; }
@@ -646,6 +700,7 @@ export default function HomePage() {
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden text-slate-300">{isMobileMenuOpen ? <X /> : <Menu />}</button>
           </div>
         </div>
+
         {isMobileMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-[#0b1120] border-b border-slate-800 shadow-xl lg:hidden p-4 flex flex-col gap-4">
             <a href="#services" onClick={() => setIsMobileMenuOpen(false)} className="text-white font-medium">{curr.nav[0]}</a>
@@ -882,7 +937,6 @@ export default function HomePage() {
             <button className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-red-500 p-2 rounded-full text-white transition-colors" onClick={() => setSelectedProject(null)}>
               <X className="w-5 h-5" />
             </button>
-
             <div className="w-full md:w-2/3 relative bg-black flex flex-col">
               <div className="relative flex-1 flex items-center justify-center group/slider min-h-[300px]">
                 {modalImages.length > 1 && (
@@ -908,7 +962,6 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-
             <div className="w-full md:w-1/3 p-8 sm:p-10 overflow-y-auto bg-[#080c16] custom-scrollbar border-l border-slate-800/50">
               <div className="uppercase tracking-widest text-xs font-bold text-cyan-500 mb-3">{curr.projectDetails}</div>
               <h2 className="text-3xl font-extrabold text-white mb-2">{getTranslatedText(selectedProject, "client_name")}</h2>
@@ -988,41 +1041,158 @@ export default function HomePage() {
           <p className="text-cyan-400/80 text-sm md:text-base text-center max-w-2xl mx-auto mb-12 leading-relaxed">
             {curr.formMotivationText}
           </p>
+          
           {errorMessage && submitStatus === "error" && (
-            <div className="mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">{errorMessage}</div>
+            <div className="mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center font-medium shadow-lg animate-in fade-in duration-300">
+              {errorMessage}
+            </div>
           )}
-          <div className="bg-[#0b1120] border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative">
+
+          <div className="bg-[#0b1120] border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
             {submitStatus === "success" && (
-              <div className="absolute inset-0 bg-[#0b1120] rounded-3xl flex flex-col items-center justify-center p-8 text-center z-10 border border-cyan-500/30">
+              <div className="absolute inset-0 bg-[#0b1120] rounded-3xl flex flex-col items-center justify-center p-8 text-center z-10 border border-cyan-500/30 animate-in fade-in duration-300">
                 <CheckCircle2 className="w-16 h-16 text-cyan-500 mb-4" />
                 <h3 className="text-2xl font-bold text-white mb-2">{curr.successMsg}</h3>
               </div>
             )}
+            
             <form onSubmit={handleQuoteSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fName}</label><input type="text" value={formData.client_name} onChange={(e) => setFormData({...formData, client_name: e.target.value})} className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm" placeholder="Mario Rossi" /></div>
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fEmail}</label><input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm" placeholder="mario@example.com" /></div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fPhone}</label><PhoneInput international defaultCountry="IT" value={formData.phone} onChange={(val: string | undefined) => setFormData({...formData, phone: val || ""})} /></div>
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fShow}</label><input type="text" value={formData.show_name} onChange={(e) => setFormData({...formData, show_name: e.target.value})} className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm" placeholder="Salone del Mobile" /></div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fCity}</label><input type="text" value={formData.city_country} onChange={(e) => setFormData({...formData, city_country: e.target.value})} className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm" placeholder="Milano, Italia" /></div>
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fSize}</label><div className="relative"><input type="number" min="1" step="1" value={formData.booth_area} onChange={(e) => setFormData({...formData, booth_area: e.target.value})} className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm pr-12" placeholder="24" /><Ruler className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" /></div></div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fStartDate}</label><div className="relative"><DatePicker selected={formData.start_date} onChange={(date: any) => setFormData({...formData, start_date: date})} dateFormat="dd/MM/yyyy" minDate={new Date()} placeholderText="DD/MM/YYYY" className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm" /><Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" /></div></div>
-                <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fEndDate}</label><div className="relative"><DatePicker selected={formData.end_date} onChange={(date: any) => setFormData({...formData, end_date: date})} dateFormat="dd/MM/yyyy" minDate={formData.start_date || new Date()} placeholderText="DD/MM/YYYY" className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm" /><Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" /></div></div>
-              </div>
-              <div><label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fMsg}</label><textarea rows={4} value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm resize-none" placeholder="Descrivi il tuo progetto..." /></div>
-              <div className="flex items-center justify-between bg-[#080c16] border border-slate-700 rounded-xl px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setCaptchaChecked(!captchaChecked)} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${captchaChecked ? "bg-cyan-500 border-cyan-500 text-slate-900" : "border-slate-500 text-transparent hover:border-cyan-400"}`}><CheckCircle2 className="w-4 h-4" /></button>
-                  <span className="text-slate-300 text-sm select-none">{curr.captcha}</span>
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fName}</label>
+                  <input 
+                    type="text" 
+                    value={formData.client_name} 
+                    onChange={(e) => handleInputChange("client_name", e.target.value)} 
+                    className={getInputClass("client_name")} 
+                    placeholder="Mario Rossi" 
+                  />
                 </div>
-                <ShieldCheck className="text-cyan-500 w-8 h-8" />
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fEmail}</label>
+                  <input 
+                    type="email" 
+                    value={formData.email} 
+                    onChange={(e) => handleInputChange("email", e.target.value)} 
+                    className={getInputClass("email")} 
+                    placeholder="mario@example.com" 
+                  />
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fPhone}</label>
+                  <div className={fieldErrors.includes("phone") ? "phone-error" : ""}>
+                    <PhoneInput 
+                      international 
+                      defaultCountry="IT" 
+                      value={formData.phone} 
+                      onChange={(val: string | undefined) => handleInputChange("phone", val || "")} 
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fShow}</label>
+                  <input 
+                    type="text" 
+                    value={formData.show_name} 
+                    onChange={(e) => handleInputChange("show_name", e.target.value)} 
+                    className={getInputClass("show_name")} 
+                    placeholder="Salone del Mobile" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fCity}</label>
+                  <input 
+                    type="text" 
+                    value={formData.city_country} 
+                    onChange={(e) => handleInputChange("city_country", e.target.value)} 
+                    className={getInputClass("city_country")} 
+                    placeholder="Milano, Italia" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fSize}</label>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      min="1" 
+                      step="1" 
+                      value={formData.booth_area} 
+                      onChange={(e) => handleInputChange("booth_area", e.target.value)} 
+                      className={getInputClass("booth_area", "pr-12")} 
+                      placeholder="24" 
+                    />
+                    <Ruler className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fStartDate}</label>
+                  <div className="relative">
+                    <DatePicker 
+                      selected={formData.start_date} 
+                      onChange={(date: any) => handleInputChange("start_date", date)} 
+                      dateFormat="dd/MM/yyyy" 
+                      minDate={new Date()} 
+                      placeholderText="DD/MM/YYYY" 
+                      className={getInputClass("start_date")} 
+                    />
+                    <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fEndDate}</label>
+                  <div className="relative">
+                    <DatePicker 
+                      selected={formData.end_date} 
+                      onChange={(date: any) => handleInputChange("end_date", date)} 
+                      dateFormat="dd/MM/yyyy" 
+                      minDate={formData.start_date || new Date()} 
+                      placeholderText="DD/MM/YYYY" 
+                      className={getInputClass("end_date")} 
+                    />
+                    <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1.5 text-sm font-medium">{curr.fMsg}</label>
+                <textarea 
+                  rows={4} 
+                  value={formData.message} 
+                  onChange={(e) => setFormData({...formData, message: e.target.value})} 
+                  className="w-full bg-[#080c16] border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors text-sm resize-none" 
+                  placeholder="Descrivi il tuo progetto..." 
+                />
+              </div>
+
+              <div className={`flex items-center justify-between bg-[#080c16] border rounded-xl px-5 py-4 transition-colors ${fieldErrors.includes("captcha") ? "border-red-500 bg-red-500/5" : "border-slate-700"}`}>
+                <div className="flex items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={() => { 
+                      setCaptchaChecked(!captchaChecked); 
+                      if(fieldErrors.includes("captcha")) setFieldErrors(prev => prev.filter(e => e !== "captcha"));
+                    }} 
+                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${captchaChecked ? "bg-cyan-500 border-cyan-500 text-slate-900" : "border-slate-500 text-transparent hover:border-cyan-400"}`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                  <span className={`text-sm select-none ${fieldErrors.includes("captcha") ? "text-red-400 font-medium" : "text-slate-300"}`}>
+                    {curr.captcha}
+                  </span>
+                </div>
+                <ShieldCheck className={fieldErrors.includes("captcha") ? "text-red-500 w-8 h-8" : "text-cyan-500 w-8 h-8"} />
+              </div>
+
               <button type="submit" disabled={isSubmitting} className="w-full bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-bold py-5 rounded-xl transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center justify-center gap-2 text-base">
                 {isSubmitting ? <span className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                 {isSubmitting ? "..." : curr.submitBtnNew}
