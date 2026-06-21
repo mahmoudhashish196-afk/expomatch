@@ -23,31 +23,32 @@ export async function generateMetadata(): Promise<Metadata> {
     .single();
 
   // استخدام البيانات من الداتا بيز، ولو مفيش نستخدم كلام افتراضي (Fallback)
-  const dynamicTitle = settings?.site_title || "EXPO MATCH | Unforgettable Exhibition Stands Across Europe";
-  const dynamicDescription = settings?.meta_description || "Italian Craftsmanship. Pan-European Reach. We offer custom 3D stand design, turnkey fabrication, and logistics. We Match Your Vision to a Perfect Showcase.";
+  // تم تغيير الاسم إلى EXPO MELD
+  const dynamicTitle = settings?.site_title || "EXPO MELD | Unforgettable Exhibition Stands Across Europe";
+  
+  // تم تعديل الجملة لتناسب البراند الجديد (Meld Your Vision)
+  const dynamicDescription = settings?.meta_description || "Italian Craftsmanship. Pan-European Reach. We offer custom 3D stand design, turnkey fabrication, and logistics. We Meld Your Vision to a Perfect Showcase.";
 
   return {
     title: dynamicTitle,
     description: dynamicDescription,
-    keywords: "exhibition stands europe, custom 3d stand design, turnkey booth fabrication, milano exhibition, messe frankfurt, expo match, exhibition contractor, stand builders italy, bespoke exhibition booths",
-    authors: [{ name: "Expo Match" }],
-    icons: {
-      icon: "/favicon.ico",
-    },
+    keywords: "exhibition stands europe, custom 3d stand design, turnkey booth fabrication, milano exhibition, messe frankfurt, expo meld, exhibition contractor, stand builders italy, bespoke exhibition booths",
+    authors: [{ name: "Expo Meld" }],
+    // تم حذف كود استدعاء favicon.ico عشان المتصفح يقرا ملف icon.svg الجديد أوتوماتيك
     alternates: {
-      canonical: "https://expomatch.com",
+      canonical: "https://expomeld.com",
     },
     openGraph: {
       title: dynamicTitle,
       description: dynamicDescription,
-      url: "https://expomatch.com",
-      siteName: "EXPO MATCH",
+      url: "https://expomeld.com",
+      siteName: "EXPO MELD",
       images: [
         {
           url: "/og-image.jpg", 
           width: 1200,
           height: 630,
-          alt: "Expo Match Exhibition Stands",
+          alt: "Expo Meld Exhibition Stands",
         },
       ],
       locale: "en_US",
